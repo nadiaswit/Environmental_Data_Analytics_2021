@@ -28,7 +28,7 @@ getwd()
 # 2. Load packages
 library(tidyverse)
 
-# 3. Import datasets
+# 3. Import datasets; when import as csv, it changes data to character columns
 USGS.flow.data <- read.csv("./Data/Processed/USGS_Site02085000_Flow_Processed.csv")
 
 #View(USGS.flow.data)
@@ -39,10 +39,6 @@ str(USGS.flow.data)
 dim(USGS.flow.data)
 
 # Check our date column
-class(USGS.flow.data$datetime)
-
-USGS.flow.data$datetime <- as.Date(USGS.flow.data$datetime, format = "%Y-%m-%d") 
-class(USGS.flow.data$datetime)
 
 ```
 
@@ -58,8 +54,13 @@ Note: each of these approaches utilize the package "ggplot2". We will be coverin
 Visualize count data for categorical variables. 
 
 ```{r, fig.height = 3, fig.width = 4}
-ggplot(USGS.flow.data, aes(x = discharge.mean.approval)) +
+ggplot(USGS.flow.data, aes(x = discharge.mean.approval)) + #ggpplot = grammar of graphics; plots have 2 components (data frame and aesthetics)
   geom_bar()
+
+ggplot(na.omit(USGS.flow.data), aes(x = discharge.mean.approval)) + 
+  geom_bar()
+
+#bar plot useful for categorical data
 ```
 
 ### Histogram (function: geom_histogram)
@@ -67,19 +68,19 @@ ggplot(USGS.flow.data, aes(x = discharge.mean.approval)) +
 Visualize distributions of values for continuous numerical variables. What is happening in each line of code? Insert a comment above each line.
 
 ```{r, fig.height = 3, fig.width = 4}
-#
-ggplot(USGS.flow.data) +
+#can put aes on first line as well
+ggplot(USGS.flow.data) + 
   geom_histogram(aes(x = discharge.mean))
 
-#
+#move past default bin width
 ggplot(USGS.flow.data) +
   geom_histogram(aes(x = discharge.mean), binwidth = 10)
 
-#
+#specify number of bins; generally choose between 5-20 bins
 ggplot(USGS.flow.data) +
   geom_histogram(aes(x = discharge.mean), bins = 20)
 
-#
+#force x axis to new range
 ggplot(USGS.flow.data, aes(x = discharge.mean)) +
   geom_histogram(binwidth = 10) + 
   scale_x_continuous(limits = c(0, 500))
@@ -88,6 +89,7 @@ ggplot(USGS.flow.data, aes(x = discharge.mean)) +
 ggplot(USGS.flow.data) +
   geom_histogram(aes(x = gage.height.mean))
 
+#histograms present a numerical count of categorical data
 ```
 ### Frequency line graph (function: geom_freqpoly)
 
@@ -97,11 +99,11 @@ An alternate to a histogram is a frequency polygon graph (distributions of value
 #
 ggplot(USGS.flow.data) +
   geom_freqpoly(aes(x = gage.height.mean), bins = 50) +
-  geom_freqpoly(aes(x = gage.height.min), bins = 50, color = "darkgray") +
-  geom_freqpoly(aes(x = gage.height.max), bins = 50,  lty = 2) +
+  geom_freqpoly(aes(x = gage.height.min), bins = 50, color = "red") +  #lower than mean bc looking at frequency data not absolute value
+  geom_freqpoly(aes(x = gage.height.max), bins = 50,  lty = 2) + #lty = line type (2=dashed line)
   scale_x_continuous(limits = c(0, 10))
 
-#
+#looks at unique values in aes, assigning diff colors based on those values (categorical value)
 ggplot(USGS.flow.data) +
   geom_freqpoly(aes(x = gage.height.mean, color = gage.height.mean.approval), bins = 50) +
   scale_x_continuous(limits = c(0, 10)) +
@@ -123,15 +125,15 @@ A box-and-whisker plot is yet another alternative to histograms (distributions o
 An alternate option is a violin plot, which displays density distributions, somewhat like a hybrid of the box-and-whiskers and the frequency polygon plot.
 
 ```{r, fig.height = 3, fig.width = 4}
-#
+#(showing distribution of values)middle line = median; 50% of IQR inside box
 ggplot(USGS.flow.data) +
   geom_boxplot(aes(x = gage.height.mean.approval, y = gage.height.mean))
 
-#
+#taking slices of data and looking at distribution (cut width and cut interval); showing variances across data among diff categories - looking at distributions along slices of data
 ggplot(USGS.flow.data) +
   geom_boxplot(aes(x = gage.height.mean, y = discharge.mean, group = cut_width(gage.height.mean, 1)))
 
-#
+#look at range and distribution within that range; width = number of data pts within that distribution
 ggplot(USGS.flow.data) +
   geom_violin(aes(x = gage.height.mean.approval, y = gage.height.mean), 
               draw_quantiles = c(0.25, 0.5, 0.75))
@@ -141,8 +143,9 @@ ggplot(USGS.flow.data) +
 Visualize relationships between continuous numerical variables.
 
 ```{r, fig.height = 3, fig.width = 4}
+#explore relations among variables instead of distribution
 ggplot(USGS.flow.data) +
-  geom_point(aes(x = discharge.mean, y = gage.height.mean))
+  geom_point(aes(x = discharge.mean, y = gage.height.mean)) #gain volume, gauge doesn't inc in height as quickly (slows down bc stream widening)
 
 ggplot(USGS.flow.data) +
   geom_point(aes(x = datetime, y = discharge.mean))
