@@ -42,28 +42,28 @@ print(O3plot)
 
 O3plot1 <- ggplot(EPAair) +
   geom_point(aes(x = Date, y = Ozone)) +
-  theme_gray()
+  theme_gray() #default - gray with white lines
 print(O3plot1)
 
 O3plot2 <- ggplot(EPAair) +
   geom_point(aes(x = Date, y = Ozone)) +
-  theme_bw()
+  theme_bw() #white with black lines as axis
 print(O3plot2)
 
 O3plot3 <- ggplot(EPAair) +
   geom_point(aes(x = Date, y = Ozone)) +
-  theme_light()
+  theme_light() #white with gray axis lines
 print(O3plot3)
 
 O3plot4 <- ggplot(EPAair) +
   geom_point(aes(x = Date, y = Ozone)) +
-  theme_classic()
+  theme_classic() #no grid lines
 print(O3plot4)
 ```
 
 Notice that some aspects of your graph have not been adjusted, including: 
 
-* text size
+* text size - default size is 11
 * axis label colors
 * legend position and justification
 
@@ -81,7 +81,7 @@ O3plot5 <- ggplot(EPAair) +
   mytheme
 print(O3plot5)  
 
-theme_set(mytheme)
+theme_set(mytheme)#set theme for all subsequent plots
 
 O3plot6 <- ggplot(EPAair) +
   geom_point(aes(x = Date, y = Ozone))
@@ -95,15 +95,15 @@ While the theme allows us to set multiple aspects of plots, ggplot allows us to 
 
 ```{r, fig.height = 3, fig.width = 4, warning = FALSE}
 O3plot7 <- ggplot(EPAair, aes(x = Date, y = Ozone)) +
-  geom_hline(yintercept = 50, lty = 2) +
+  geom_hline(yintercept = 50, lty = 2) + #horizontal line, lty is type of line (2 is dashed line)
   geom_hline(yintercept = 100, lty = 2) +
   geom_point(alpha = 0.5, size = 1.5) +
   geom_text(x = as.Date("2020-01-01"), y = 45, label = "good", hjust = 1, fontface = "bold") +   # hjust = 1 means left align
   geom_text(x = as.Date("2020-01-01"), y = 95, label = "moderate", hjust = 1, fontface = "bold") +
   geom_text(x = as.Date("2020-01-01"), y = 120, label = "unhealthy (sensitive groups)", hjust = 1, fontface = "bold") +
   scale_x_date(limits = as.Date(c("2018-01-01", "2019-12-31")), 
-    date_breaks = "2 months", date_labels = "%b %y") +
-  ylab(expression("O"[3]* " AQI Value")) +
+    date_breaks = "2 months", date_labels = "%b %y") + #want abbreviation for month, and year to be 2 digits
+  ylab(expression("O"[3]* " AQI Value")) + #use [] for subscript
   theme(axis.text.x = element_text(angle = 45,  hjust = 1))
 print(O3plot7)  
 
@@ -159,7 +159,7 @@ library(viridis)
 library(RColorBrewer)
 library(colormap)
 
-scales::show_col(colormap(colormap = colormaps$viridis, nshades = 16))
+scales::show_col(colormap(colormap = colormaps$viridis, nshades = 16)) #showing color map
 scales::show_col(colormap(colormap = colormaps$inferno, nshades = 16))
 scales::show_col(colormap(colormap = colormaps$magma, nshades = 16))
 display.brewer.all(n = 9)
@@ -174,7 +174,7 @@ print(NvsP)
 # change your legend labels
 NvsP2 <-
   ggplot(PeterPaul.chem.nutrients, aes(x = tp_ug, y = tn_ug, color = depth, shape = lakename)) +
-  geom_point(alpha = 0.7, size = 2.5) +
+  geom_point(alpha = 0.7, size = 2.5) + #alpha = transparency 
   #labs() + # change your legend labels here
   scale_shape_manual(values = c(15, 17)) +
   #scale_color_distiller(palette = "Blues", direction = 1) + # use scale_color_brewer for discrete variables
@@ -208,7 +208,7 @@ A useful guide for aligning plots by axis can be found here: https://wilkelab.or
 ```{r, fig.height = 7, fig.width = 6}
 #install.packages("cowplot")
 library(cowplot)
-plot_grid(NvsP2, Nutrientplot, nrow = 2, align = 'h', rel_heights = c(1.25, 1))
+plot_grid(NvsP2, Nutrientplot, nrow = 2, align = 'h', rel_heights = c(1.25, 1)) #rel height - adjusting space in plotting window for different plots (some may need more space)
 
 ```
 
