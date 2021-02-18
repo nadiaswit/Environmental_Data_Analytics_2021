@@ -19,6 +19,7 @@ editor_options:
 The expression function can be used when you want to add mathematical symbols and subscripts mixed with regular letter to labels. 
 
 ```{r}
+library(tidyverse)
 Plot_text <-
 ggplot(data=data.frame(x=0,y=0))+
   geom_point(aes(x=x,y=y)) +
@@ -60,6 +61,13 @@ Exercise: build your own scatterplots of PeterPaul.chem.nutrients
 # Color your points by year, and facet by lake in two rows.
 # Change the ylab name
 
+PeterPaul.Nut.Temp <- ggplot(filter(PeterPaul.chem.nutrients, depth==0), 
+                             aes(x=daynum, y=temperature_C, color=year4)) +
+  geom_point(dotsize=0.3, shape=17,alpha=0.5) +
+  facet_wrap(vars(lakename), nrow=2) +
+  labs(title="Plot 1", x="Day of the Year", y="Year")+
+  scale_x_continuous(limits= c(120,320)) #changes scale to better visualize data
+print(PeterPaul.Nut.Temp)
 
 #2. 
 # Plot temperature by date. Color your points by depth.
@@ -67,8 +75,15 @@ Exercise: build your own scatterplots of PeterPaul.chem.nutrients
 # Change the color palette to magma and play with direction (+- 1), which one makes more sense?
 # Change x axis to include marker/labels every 5 years
 
+PeterPaul.Date.Temp <- ggplot(PeterPaul.chem.nutrients) +
+  geom_point(aes(x=sampledate, y=temperature_C, color=depth, dotsize=0.5))+
+  scale_color_viridis(option="magma", direction=-1)+
+  scale_x_date(date_breaks= "5 years", date_labels= "%Y")
+print(PeterPaul.Date.Temp)
 
 
+#data set in ggplot, assigning data to be at any geom you assign in the plot; can assign certain aesthetics
+#if you want to do a dot plot, bar, etc, in same plot with same data, put into ggplot (first line). if you want to have diff data for each, then put it in each geom
 
 ```
 ## Plotting the relationship between two continuous variables: Scatterplot
@@ -82,7 +97,11 @@ Exercise: Plot relationships between air quality measurements
 # Make the points 50 % transparent
 # Add a line of best fit for the linear regression of these variables.
 
-
+AQI.Ozone <- ggplot(EPAair, aes(x=PM2.5, y=Ozone, color= SITE_LATITUDE)) +
+  geom_point(alpha=0.5)+
+  geom_smooth(method=lm, se=FALSE, color="red")
+print(AQI.Ozone)  
+#meanlatitude?
 
 
 ```
@@ -97,7 +116,7 @@ Exercise: Plot distributions of AQI values for EPAair.
 # Create several types of plots depicting PM2.5, divided by year. 
 # Choose which plot displays the data best and justify your choice. 
 
-
+#want to look at year as a factor (as.factor)
 
 ```
 
@@ -113,8 +132,14 @@ The following graph displays the counts of specific endpoints measured in neonic
 ```{r}
 
 Neonics <- read.csv("./Data/Raw/ECOTOX_Neonicotinoids_Insects_raw.csv")
-ggplot(Neonics) +
-  geom_bar(aes(x = Endpoint))
+
+Neonics.Endpoints <- ggplot(Neonics) +
+  geom_bar(aes(x = Endpoint), fill="orange",color="dark orange")+
+  theme_minimal()+
+  labs(x="Endpoint")+
+  theme(axis.text.x=element_text(angle=45))+
+  scale_x_discrete(limits=rev(levels(Neonics$Endpoint)))
+print(Neonics.Endpoints)
 
 
 
