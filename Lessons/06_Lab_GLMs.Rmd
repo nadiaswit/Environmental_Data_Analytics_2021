@@ -44,6 +44,8 @@ theme_set(mytheme)
 
 Continuous response, one categorical explanatory variable with two categories (or comparison to a single value if a one-sample test).
 
+Similar to an ANOVA but simpler for (have only one or two groupings of data).
+
 ### Formulating Hypothesis for µ
 
 Two hypotheses are formed – the null hypothesis and the alternative hypothesis.
@@ -67,19 +69,20 @@ Are Ozone levels below the threshold for "good" AQI index (0-50)?
 > Exercise 1: State the hypotheses for testing mean of AQI index.
 
 > Answer: 
-
+H0: mu >= 50 ppm
+Ha: mu < 50 ppm
 
 ```{r}
-
+#book: practical statistics
 
 summary(EPAair$Ozone)
 EPAair.subsample <- sample_n(EPAair, 5000)
 
 # Evaluate assumption of normal distribution
-shapiro.test((EPAair.subsample$Ozone))
+shapiro.test((EPAair.subsample$Ozone)) #can only run on 5000 records
 ggplot(EPAair, aes(x = Ozone)) +
   geom_histogram() 
-qqnorm(EPAair$Ozone); qqline(EPAair$Ozone)
+qqnorm(EPAair$Ozone); qqline(EPAair$Ozone) #semi colon runs graphs on top of each other
 
 O3.onesample <- t.test(EPAair$Ozone, mu = 50, alternative = "less")
 O3.onesample
@@ -88,13 +91,13 @@ Ozone.plot <- ggplot(EPAair, aes(x = Ozone)) +
   #geom_density(stat = "count", fill = "gray") +
   geom_density(fill = "gray") +
   geom_vline(xintercept = 50, color = "#238b45", lty = 2, size = 0.9) +
-  scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0))
+  scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0)) #fills graph so no space between x axis
 print(Ozone.plot)
 ```
 
 Write a sentence or two about the results of this test. Include both the results of the test and an interpretation that puts the findings in context of the research question.
 
-> 
+> On average, ozone measured in North Carolina is less than 50 ppm(t-test,df=6829,p<0.01)
 
 ### Two-sample t-test
 
@@ -162,12 +165,18 @@ For the NTL-LTER dataset, can we predict PM2.5 from Ozone?
 ```{r}
 
 #Exercise 3: Run a linear regression PM2.5 by Ozone. Find the p-value and R-squared value. 
+#is ozone a driver and impacts paramaters?
+#H0: there is no relationship; Ha: changes in PM2.5 related to changes in ozone
 
+the_model <- lm(data=EPAair, PM2.5~Ozone)
+summary (the_model)
 
 
 #Exercise 4: Build a scatterplot. Add a line and standard error for the linear regression. Add the regression equation to the plot
 
-
+ggplot(data=EPAair, aes(x=Ozone, y=PM2.5))+
+  geom_point()+
+  geom_smooth(method="lm")
 
 ```
 
@@ -179,9 +188,11 @@ What other variables can we add to improve model?
 ```{r}
 
 #Exercise 5: Build correlation plots and identify more possible explanatory variables to add to the regression.
+#correlation doesn't cause causation. Are there other better variables? Combining factors?
 
+library(corrplot)
 
-
+EPA_Corr <- cor(EPAair)
 
 #Exercise 6: Choose a model by AIC in a Stepwise Algorithm. Do the results from AIC match the variables you selected on Exercise 5?
 
