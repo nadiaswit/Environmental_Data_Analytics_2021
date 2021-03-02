@@ -81,6 +81,8 @@ shapiro.test(Litter.Totals$dryMass[Litter.Totals$plotID == "NIWO_063"])
 shapiro.test(Litter.Totals$dryMass[Litter.Totals$plotID == "NIWO_064"])
 shapiro.test(Litter.Totals$dryMass[Litter.Totals$plotID == "NIWO_067"])
 
+#p-value less than 0.05, reject null hypothesis, so the site does not follow a normal distribution
+
 #results: reject null in all except two: NIWO_057 and NIWO_046
 qqnorm(Litter.Totals$dryMass); qqline(Litter.Totals$dryMass)
 
@@ -96,20 +98,29 @@ Litter.Totals.anova <- aov(data = Litter.Totals, dryMass ~ plotID)
 summary(Litter.Totals.anova)
 
 #results: reject null hypothesis i.e. difference between a pair of group means is statiscally significant
+#11 df
+#sum sq - difference btwn groups and within groups; deviation of each observation from the mean
+#mean.sq - sum sq/df
+#aov - mean is the same across all sites (when rejecting, observations are different, not all same). Need to run posthoc test to see what variables are different
 
 # Format ANOVA as lm
 Litter.Totals.anova2 <- lm(data = Litter.Totals, dryMass ~ plotID)
 summary(Litter.Totals.anova2)
+#results will report one level on each categorical variable
+#all estimates in respect to intercept term
+
 
 # Checking model fit and assumptions
 # ANOVA is robust against departures from normality.
-plot(Litter.Totals.anova2)
+
 
 # Post-hoc test
+#post hoc explores differences btwn multiple group means - Tukey test compares all group pairings
 # TukeyHSD() computes Tukey Honest Significant Differences
 TukeyHSD(Litter.Totals.anova)
 
 # Extract groupings for pairwise relationships
+## need agricolae package
 Litter.Totals.groups <- HSD.test(Litter.Totals.anova, "plotID", group = TRUE)
 Litter.Totals.groups
 #same letters in group if they have overlapping statistics
@@ -155,9 +166,10 @@ The output gives test statistics for each explanatory variable as well as the in
 
 ```{r}
 # Format as aov
-Litter.anova.2way3 <- aov(data = Litter, dryMass ~ functionalGroup * nlcdClass)
+Litter.anova.2way3 <- aov(data = Litter, dryMass ~ functionalGroup * nlcdClass) #multiply to see the interaction btwn them
 #is the level of dray mass different among different functional groups among land cover class
 summary(Litter.anova.2way3)
+#p values less than .05, the interaction is significant
 
 # Format as lm
 Litter.anova.2way4 <- lm(data = Litter, dryMass ~ functionalGroup * nlcdClass)
@@ -170,9 +182,9 @@ If the interaction is significant, we interpret pairwise differences for the int
 # Run a post-hoc test for pairwise differences
 TukeyHSD(Litter.anova.2way3)
 
-Litter.interaction <- with(Litter, interaction(functionalGroup, nlcdClass))
+Litter.interaction <- with(Litter, interaction(functionalGroup, nlcdClass)) #assigns interaction levels
 
-#Litter.test <- cbind(Litter,Litter.interaction)
+Litter.test <- cbind(Litter,Litter.interaction)
 
 Litter.anova.2way5 <- aov(data = Litter, dryMass ~ Litter.interaction)
 

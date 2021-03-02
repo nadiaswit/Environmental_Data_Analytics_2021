@@ -1,0 +1,192 @@
+---
+title: "Assignment 7: GLMs (Linear Regressios, ANOVA, & t-tests)"
+author: "Nadia Swit"
+output: pdf_document
+geometry: margin=2.54cm
+editor_options: 
+  chunk_output_type: console
+---
+
+## OVERVIEW
+
+This exercise accompanies the lessons in Environmental Data Analytics on generalized linear models. 
+
+## Directions
+1. Change "Student Name" on line 3 (above) with your name.
+2. Work through the steps, **creating code and output** that fulfill each instruction.
+3. Be sure to **answer the questions** in this assignment document.
+4. When you have completed the assignment, **Knit** the text and code into a single PDF file.
+5. After Knitting, submit the completed exercise (PDF file) to the dropbox in Sakai. Add your last name into the file name (e.g., "Fay_A06_GLMs.Rmd") prior to submission.
+
+The completed exercise is due on Tuesday, March 2 at 1:00 pm.
+
+## Set up your session 
+1. Set up your session. Check your working directory. Load the tidyverse, agricolae and other needed packages. Import the *raw* NTL-LTER raw data file for chemistry/physics (`NTL-LTER_Lake_ChemistryPhysics_Raw.csv`). Set date columns to date objects.
+
+2. Build a ggplot theme and set it as your default theme.
+
+```{r setup}
+#1
+library(tidyverse)
+library(lubridate)
+library(htmltools)
+library(agricolae)
+library(dplyr)
+library(ggplot2)
+
+NTL.LTER <- read.csv("./Data/Raw/NTL-LTER_Lake_ChemistryPhysics_Raw.csv")
+NTL.LTER$sampledate <- as.Date(NTL.LTER$sampledate, format = "%m/%d/%y")
+
+#2
+mytheme <- theme_light(base_size = 12) +
+  theme(axis.text = element_text(color = "black"), 
+        legend.position = "left", 
+        plot.title=element_text(hjust=0.5)) 
+
+theme_set(mytheme)
+
+```
+
+## Simple regression
+Our first research question is: Does mean lake temperature recorded during July change with depth across all lakes?
+
+3. State the null and alternative hypotheses for this question:
+> Answer:
+H0: Mean lake temperature is the same across all depths during July
+Ha: Mean lake temperature differs based on depth during July
+
+
+4.  Wrangle your NTL-LTER dataset with a pipe function so that the records meet the following criteria: 
+ * Only dates in July. 
+ * Only the columns: `lakename`, `year4`, `daynum`, `depth`, `temperature_C`
+ * Only complete cases (i.e., remove NAs)
+
+5. Visualize the relationship among the two continuous variables with a scatter plot of temperature by depth. Add a smoothed line showing the linear model, and limit temperature values from 0 to 35 °C. Make this plot look pretty and easy to read.
+
+```{r scatterplot}
+#4
+#filter for July
+NTL.LTER.July <- NTL.LTER %>% 
+  mutate(Month = month(sampledate)) %>% 
+  filter(Month == 7) %>% 
+  select(lakename, year4, daynum, depth, temperature_C) %>%  #do we want to include Month?
+  na.omit()
+
+#5
+#linear regression of temperature by depth
+Temp.Depth.Regression <- lm(data = NTL.LTER.July, temperature_C ~ depth)
+
+#plot regression
+Temp.Depth.Plot <- ggplot(NTL.LTER.July, aes(x=depth, y=temperature_C)) +
+  geom_point()+
+  geom_smooth(method='lm', se=FALSE, color="blue")+
+  ylim(0,35)+
+  labs(title="Temperature variation by water depth in July", x="Depth (m)", y="Temperature (C)")
+print(Temp.Depth.Plot)
+
+
+```
+
+
+6. Interpret the figure. What does it suggest with regards to the response of temperature to depth? Do the distribution of points suggest about anything about the linearity of this trend?
+
+> Answer: The figure suggests that the temperature decreaseses as depth increases as there is a negative linear relationship.
+
+
+7. Perform a linear regression to test the relationship and display the results
+
+```{r linear.regression}
+#7
+summary(Temp.Depth.Regression)
+
+```
+
+
+8. Interpret your model results in words. Include how much of the variability in temperature is explained by changes in depth, the degrees of freedom on which this finding is based, and the statistical significance of the result. Also mention how much temperature is predicted to change for every 1m change in depth. 
+
+> Answer: There is a negative correlation between temperature and depth. Based on the estimate coefficient of depth, for approximately every 2 m decrease in depth the temperature drops 1 degree celsius. Roughly 74% of the variance in temperature can be explained by the change in depth. The degrees of freedom area 9,726. The F-statistic is larger than 1 (2.75e-4) indicating that there is a relationship between temperature and depth. The overall p-value (2.2e-16) is also less than alpha (0.05), providing strong evidence to reject the null hypothesis that average temperature is the same at all depths.
+
+
+---
+
+## Multiple regression
+Let's tackle a similar question from a different approach. Here, we want to explore what might the best set of predictors for lake temperature in July across the monitoring period at the North Temperate Lakes LTER. 
+
+
+9. Run an AIC to determine what set of explanatory variables (year4, daynum, depth) is best suited to predict temperature.
+
+10. Run a multiple regression on the recommended set of variables. 
+
+```{r temperature.model}
+#9
+#create AIC and run step function
+Temp.Depth.AIC <- lm(data = NTL.LTER.July, temperature_C ~ depth + year4 + daynum)
+step(Temp.Depth.AIC)
+
+#10
+#multiple regression on all variables
+summary(Temp.Depth.AIC)
+
+```
+
+11. What is the final set of explanatory variables that the AIC method suggests we use to predict temperature in our multiple regression? How much of the observed variance does this model explain? Is this an improvement over the model using only depth as the explanatory variable?
+
+> Answer: The AIC method suggests using all variables since the original AIC is the lowest (26,065.53). After each variable was removed, it would increase the AIC. Thus, all three variables will be kept. After running the multiple regression with all the variables, the model explains approximately 74% of the variance. This indicates that about 74% of the variability in temperature is explained by the variables of year, day number, and depth. Compared to the simple linear regression, both regressions explain around the same amount of variance. However, this multiple regression also reports a very small p-value that is less than 0.05, which also enables us to reject the null hypothesis. Although, some variables have more significance than others towards temperature. 
+
+
+---
+## Analysis of Variance
+
+12. Now we want to see whether the different lakes have, on average, different temperatures in the month of July. Run an ANOVA test to complete this analysis. (No need to test assumptions of normality or similar variances.) Create two sets of models: one expressed as an ANOVA models and another expressed as a linear model (as done in our lessons).
+
+```{r anova.model}
+#12
+#anova model
+Lake.Temp.anova <- aov(data = NTL.LTER.July, temperature_C ~ lakename)
+summary(Lake.Temp.anova)
+
+#linear model
+Lake.Temp.lm <- lm(data=NTL.LTER.July, temperature_C ~ lakename)
+summary(Lake.Temp.lm)
+```
+
+13. Is there a significant difference in mean temperature among the lakes? Report your findings. 
+
+> Answer: The p-values from both the linear model and the one way ANOVA model are the same and very small (<2e-16). This is less than 0.05, indicating that we can reject the null hypothesis that all the means are equal. The p-value provides enough evidence to suggest that mean temperature across lakes are different.
+
+
+
+14. Create a graph that depicts temperature by depth, with a separate color for each lake. Add a geom_smooth (method = "lm", se = FALSE) for each lake. Make your points 50 % transparent. Adjust your y axis limits to go from 0 to 35 degrees. Clean up your graph to make it pretty. 
+
+```{r scatterplot.2}
+#14.
+#scatter plot of each lake
+Temp.Depth.Lake <- ggplot(NTL.LTER.July, aes(x=depth, y=temperature_C, color=lakename)) +
+  geom_point(alpha=0.5)+
+  geom_smooth(method='lm', se=FALSE)+
+  ylim(0,35)+
+  labs(title="Temperature variation by water depth in July", x="Depth (m)", y="Temperature (C)", color="Lake Name")
+print(Temp.Depth.Lake)
+```
+
+15. Use the Tukey's HSD test to determine which lakes have different means.
+
+```{r tukey.test}
+#15
+#Tukey test for anova model
+TukeyHSD(Lake.Temp.anova)
+
+
+```
+
+16.From the findings above, which lakes have the same mean temperature, statistically speaking, as Peter Lake? Does any lake have a mean temperature that is statistically distinct from all the other lakes?
+
+>Answer:The closest probability to having the same mean tempeature of Peter Lake is Ward Lake (p adj = 0.783) and Ward Lake (p adj = 0.783). East Long Lake and Central Long Lake have the largest difference as a pair.
+
+ 
+
+17. If we were just looking at Peter Lake and Paul Lake. What's another test we might explore to see whether they have distinct mean temperatures? 
+
+>Answer: Another method to compare two means would be to run a two sample t-test. 
+
+
