@@ -17,6 +17,7 @@ editor_options:
 getwd()
 library(tidyverse)
 #install.packages("agricolae")
+library(htmltools)
 library(agricolae)   #you may need to install/update package "htmltools" before installing and loading agricolae
 
 Litter <- read.csv("./Data/Processed/NEON_NIWO_Litter_mass_trap_Processed.csv", stringsAsFactors = TRUE)
@@ -33,6 +34,23 @@ theme_set(mytheme)
 
 ### One-way ANOVA
 A one-way ANOVA is used when you have one categorical explanatory variable with more than two categories. In R, we can run the model with the function `lm` or `aov`, the latter of which will allow us to run post-hoc tests to determine pairwise differences.
+
+### One-Way Analysis of Variance
+It is a common situation when someone needs to determine whether 3 of more populations have equal means. To answer that question, we need to conduct a formal hypothesis test:
+H0: mu1 = mu2 = mu3 = mu4 =...muk
+Ha: not all muj are equal
+*statistical method for conducting this test is the Analysis of Variance - ANOVA
+
+Factor - quantity under examination in an experiment as a possible cause of variation in the response variable
+Levels - the categories, measurements, or strata of a factor of interest in the current experiment - also called populations
+Balanced Design - an experiment has a balanced design if the factor levels have equal sample sizes
+
+### One-Way ANOVA Assumptions
+1. All populations are normally distributed
+**looking at variance of means at each level
+2. The population variances are equal
+3. The observations are independent - the occurrence of any one individual value does not affect the probability that any other observation will occur
+
 
 Does total litter biomass differ among sites at the Niwot Ridge LTER?
 ```{r}
@@ -94,6 +112,7 @@ TukeyHSD(Litter.Totals.anova)
 # Extract groupings for pairwise relationships
 Litter.Totals.groups <- HSD.test(Litter.Totals.anova, "plotID", group = TRUE)
 Litter.Totals.groups
+#same letters in group if they have overlapping statistics
 
 # Graph the results
 Litter.Totals.plot <- ggplot(Litter.Totals, aes(x = plotID, y = dryMass)) +
@@ -137,6 +156,7 @@ The output gives test statistics for each explanatory variable as well as the in
 ```{r}
 # Format as aov
 Litter.anova.2way3 <- aov(data = Litter, dryMass ~ functionalGroup * nlcdClass)
+#is the level of dray mass different among different functional groups among land cover class
 summary(Litter.anova.2way3)
 
 # Format as lm
