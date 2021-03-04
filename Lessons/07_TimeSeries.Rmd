@@ -21,11 +21,11 @@ Today we will work with two datasets. The USGS dataset on discharge at the Eno R
 
 library(tidyverse)
 library(lubridate)
-#install.packages("trend")
+#install.packages("trend") - runs stationary tests
 library(trend)
-#install.packages("zoo")
+#install.packages("zoo") - replaces missing values in time series
 library(zoo)
-#install.packages("Kendall")
+#install.packages("Kendall") - specific to one stationary test to be performed
 library(Kendall)
 #install.packages("tseries")
 library(tseries)
@@ -53,6 +53,108 @@ wind_data$DATE <- ym(wind_data$DATE)
 
 Time series are a special class of dataset, where a response variable is tracked over time. The frequency of measurement and the timespan of the dataset can vary widely. At its most simple, a time series model includes an explanatory time component and a response variable. Mixed models can include additional explanatory variables (check out the `nlme` and `lme4` R packages). We will cover a few simple applications of time series analysis in these lessons, with references for how to take analyses further.
 
+Can be a discrete or continuous time series - is a function of time - defined by values of y1,y2 of a variable y at times t1,t2:
+
+y=f(t)
+
+Time frame dependent on data set that is available (short, medium, long-term)
+
+### Trend
+- general tendency to grow or decline over a long period
+-easiest to detect
+-maybe linear or non linear
+
+### Cycle
+-up and down repetitive movement
+-repeat itself over a long period of time
+example: business cycle(prosperity, decline,depression, recovery)
+
+### Seasonal Variation
+-up and down repetitive movement occuring periodically (short duration)
+-can be caused by climate, weather condition, or custom traditions or habits
+
+### Random variations
+-erratic movements that are not predictable because they do not follow any pattern
+-example: strike, fire, flood, earthquake, etc
+
+### Terms:
+-stationary data - time series variable with no significant downward or upward trend over time
+-nonstationary data - time eseries that has significant upward/downward trend
+-seasonal data - time series exhibiting repeating patterns at regular intervals over time
+
+### Autocorrelation 
+
+Measure of dependence between 2 adjacent values of the same variables (auto=self correlation)
+
+How to compute:
+-in the context of a single variable, yt is the original series and ys is a lagged version of the series (same variable as yt, but shift above original/previous observation)
+Pt,s = Corr(yt,ys)
+*think of placing in excel and shifting one cell to create a lagged version
+
+Main conclusion: autocovariance and autocorrelation function five information about the dependence structure of a time series
+-if observation found at time is significant, it is dependent on the observation found at t-1
+
+### Stationary Process
+
+The basic idea of stationary is that the probability laws that govern the behavior of the process do not change over time
+-the mean, standard deviation, autocorrelation do not change over time (always have same parameters no matter what time)
+The distribution of observations at these points = The distribution of observations at these points
+-example: white noise series - series of independent, identically distributed (i.i.d) random variables {et};{et} is a stationary process. Assume that white noise series has a mean=0 and Var (et) = sigma^2[e]
+
+### Partial Autocorrelation Function
+
+The ACF of a stationary process yt at lag h: 
+
+pt,t-h = Corr(yt,yt-h)
+
+measures the linear dependency among the process variables yt and yt-h, but the dependency structure among the intermediate variables:
+yt,yt-1,yt-2,yt-3...yt-h+2,yt-h+1,yt-h
+*intermediate variables are those between yt and yt-h
+also plays an important role on the value ACF
+
+*removes influence of all intermediate variables - when removed, you would only have the direct correlation between yt and yt-h (PACF = partial ACF)
+
+-The ACF and PACF measure the temporal dependency of a stochastic process
+-You will always build the ACFand PACF before fitting a model to a stochastic process
+-The ACF and PACF give us information about the regressive component of the series (regression on previous observations,no external variables, only lagged variables)
+
+### Trend Component
+
+Long-term tendency: increase (upward movmenet) or decrease (downward movement)
+Trend can be linear or nonlinear
+
+Linear trend can be written as yi = beta0 + beta1ti + epsiloni
+
+Slope (beta1) and the intercept (beta0) are the unknown parameters, and epsiloni is the error term (the error or resudual is the distance from point yi to the residual)
+
+Want to remove trend because want to model a stationary data set (same mean over time that is easier to model than one that has a trend).Need to create a new variable and for each observation of y, need to subtract estimated trend
+ydetrendt = yt - (beta0 -beta1t)
+
+### Seasonal Component
+
+Short term regular wave-like patterns. Observed within 1 year, often monthly or quarterly.
+To estimate a seasonal trend, asuume the observed series can be represented as:
+
+yt=mut + xt
+
+where e[xt] = 0
+
+### Deterministic Trend
+
+Detrending is accomplished by running a regression and obtaining a series of residuals. The residuals will give the detrended series (trend-stationarity)
+
+Stochastic trend has different behaviors over time (difference stationarity). Although trend-stationarity and difference-stationarity are both trending over time, the stationarity is achieved by a distinctive procedure. In the case of difference-stationarity, stationarity is achieved by differencing the series. Sometimes we need to difference the series more than once.
+
+### Stationarity tests
+
+-Mann-Kendall test cannot be applied to seasonal data - commonly apploed to deterministic trends in series of environmental data, climate data, or hydrological data. Hypothesis test - null is that it is stationarity. Main test statistic is S - comparison of observations from sample. Want to see if future values are bigger. Will check magnitude of S and its significance based on observations (bigger number of observations,bigger S will be in order to significant).
+Use package "Kendall" and function MannKendall() and for seasonal data, use SeasonalMannKendall()
+
+-Spearman's rank correlation coefficient - a statistical measure of the strength of a monotonic relationship. Unlike Pearson's the relationship, it can check if a relationship is not linear (deos not matter the proportional increase). Because it is more general, it is always going to be higher than Pearson's. Need to verify there is a monotonic trend by computing the spearman correlation between data and series T. If correlation is close to zero than there is no trend. Use function cor() cor.test() from package "stats". Cor.test will include the coefficient which will tell you the significance of the test (related to sample size and strength of correlation).
+
+-Dick-Fuller test - tests a unit root (checks for a stochastic trend). Null hypothesis is that it contains a unit root (hard to control, needs treatments before applying time series model), whereas the alternative is stationary. In order to remove a unit root need to differentiate series. More general case can include more lags, need to use Augmented Dickey-Fuller (ADF) test. From package "tseries" and use function adf.test
+
+
 ### Opportunities
 
 Analysis of time series presents several opportunities. For environmental data, some of the most common questions we can answer with time series modeling are:
@@ -63,6 +165,8 @@ Analysis of time series presents several opportunities. For environmental data, 
 ### Challenges
 
 Time series datasets come with several caveats, which need to be addressed in order to effectively model the system. A few common challenges that arise (and can occur together within a single dataset) are: 
+
+* covariance and correlation measure joint variability of 2 variables; measure of linear dependence of 2 variables
 
 * **Autocorrelation**: Data points are not independent from one another (i.e., the measurement at a given time point is dependent on previous time point(s))
 * **Data gaps**: Data are not collected at regular intervals, necessitating *interpolation* between measurements.
@@ -116,12 +220,14 @@ Note: time series objects must be equispaced. In our case, we have daily data wi
 
 ```{r}
 EnoDischarge.late_ts <- ts(EnoDischarge.late$discharge.mean, start = c(1985,1), frequency = 365)
+#frequency 365 - daily data; reduces day by one
 ```
 
 The `stl` function decomposes the time series object into its component parts. We must specify that the window for seasonal extraction is either "periodic" or a specific number of at least 7. The decomposition proceeds through a loess (locally estimated scatterplot smoothing) function.
 
 ```{r}
-?stl
+?stl #seasonal decomposition time series by Loess (break into 3 components); first argument will always be univariate time series to be decomposed (need to run each decomposition on each variable separately); s.windo is 2nd argument and is seasonal window (can be periodic - whatever frequency you specified when creating time series object) or just use the pan (in lags)
+
 # Generate the decomposition
 EnoDischarge.late_Decomposed <- stl(EnoDischarge.late_ts, s.window = "periodic")
 
@@ -130,10 +236,12 @@ plot(EnoDischarge.late_Decomposed)
 
 # We can extract the components and turn them into data frames
 EnoDischarge.late_Components <- as.data.frame(EnoDischarge.late_Decomposed$time.series[,1:3])
+#can use $ after time series data frame to view series; the three colums add to be the observed data
 
 EnoDischarge.late_Components <- mutate(EnoDischarge.late_Components,
         Observed = EnoDischarge.late$discharge.mean,     
         Date = EnoDischarge.late$datetime)
+#add 2 columns, grabbing info, and adding day time information
 
 # Visualize how the trend maps onto the data
 ggplot(EnoDischarge.late_Components) +
@@ -185,14 +293,17 @@ summary(wind_data$AWND)
 wind_data_clean <- 
   wind_data %>% 
   mutate( AWND.clean = zoo::na.approx(AWND) )
+#package::specific function - don't need to download package as calls function
 
 summary(wind_data_clean$AWND.clean)
 #Note the NA is gone
+#interpolation methods won't change main properties of distribution (mean,min,max)
 
 ggplot(wind_data_clean ) +
   geom_line(aes(x = DATE, y = AWND.clean), color = "red") +
   geom_line(aes(x = DATE, y = AWND), color = "black") +
   ylab("Average Wind Speed") 
+#need to replace NA with interpolation when in middle - need na.approx, Can only use na.omit if NAs at beginning or end of time series
 ```
 
 ### Monotonic trend analysis, continued
@@ -235,12 +346,14 @@ wind_data_trend1 <- Kendall::SeasonalMannKendall(wind_data_ts)
 # Inspect results
 wind_data_trend1
 summary(wind_data_trend1)
+#null hypothesis is that data is stationary. however if p-value less than 0.05, reject null because have a trend
 
 
 wind_data_trend2 <- trend::smk.test(wind_data_ts)
 # Inspect results
 wind_data_trend2
 summary(wind_data_trend2)
+#SMK shows results of each value
 
 #Visualization
 wind_data_plot <-
